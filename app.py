@@ -17,6 +17,7 @@ app.register_error_handler(404, page_not_found)
 def index():
 
     if request.method == 'POST':
+        """
         if 'form1' in request.form:
             prompt = request.form['blogTopic']
             blogT = blog.generateBlogTopics(prompt)
@@ -31,6 +32,35 @@ def index():
             prompt = request.form['blogExpander']
             blogT = blog.blogSectionExpander(prompt)
             blogExpanded = blogT.replace('\n', '<br>')
+        """
+        if 'form1' in request.form:
+
+            fullText = "TOPIC:\n"
+
+            prompt = request.form['blogTopic']
+            blogT = blog.generateBlogTopics(prompt)
+            blogTopicIdeas = blogT.split('\n')
+
+            if(blogTopicIdeas[2][0].isdigit()):
+                blogTopicIdeas[2] = blogTopicIdeas[2][2:]
+
+            fullText += blogTopicIdeas[2] + "\n\n";
+
+            blogT = blog.generateBlogSections(blogTopicIdeas[2])
+            blogSectionIdeas = blogT.split('\n')
+
+            for section in range(2, len(blogSectionIdeas)-1):
+                if(blogSectionIdeas[section].replace(" ", "") != ""):
+                    if(blogSectionIdeas[section][0].isdigit()):
+                        blogSectionIdeas[section] = blogSectionIdeas[section][2:]
+                    fullText += "SECTION: \n" + blogSectionIdeas[section] + blog.blogSectionExpander(blogTopicIdeas[2],blogSectionIdeas[section]) + "\n\n\n"
+
+            print(fullText + "\n\n\nTOPIC IDEAS:\n\n")
+            print(*blogTopicIdeas, sep = "   BBB   ")
+            print("\n\n\nSECTION IDEAS:\n\n")
+            print(*blogSectionIdeas, sep = "   BBB   ")
+
+            fullText = fullText.replace('\n', '<br>')
 
 
     return render_template('index.html', **locals())
