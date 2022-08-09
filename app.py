@@ -55,10 +55,10 @@ def index():
                         blogSectionIdeas[section] = blogSectionIdeas[section][2:]
                     fullText += "SECTION: \n" + blogSectionIdeas[section] + blog.blogSectionExpander(blogTopicIdeas[2],blogSectionIdeas[section]) + "\n\n\n"
 
-            print(fullText + "\n\n\nTOPIC IDEAS:\n\n")
-            print(*blogTopicIdeas, sep = "   BBB   ")
-            print("\n\n\nSECTION IDEAS:\n\n")
-            print(*blogSectionIdeas, sep = "   BBB   ")
+            ##print(fullText + "\n\n\nTOPIC IDEAS:\n\n")
+            ##print(*blogTopicIdeas, sep = "   BBB   ")
+            ##print("\n\n\nSECTION IDEAS:\n\n")
+            ##print(*blogSectionIdeas, sep = "   BBB   ")
 
             fullText = fullText.replace('\n', '<br>')
 
