@@ -1,50 +1,69 @@
 from flask import Flask, render_template, request
 import config
 import blog
+from blog_api import blogConnect 
+
+import sys
+
+import random
+from time import sleep
+
+import requests
+from googleapiclient.discovery import build
+
+from oauth2client import client
+from googleapiclient import sample_tools
+
+Key = "AIzaSyBsMu6-T6herV7oXWTmE5t_w_VNtRZYskE"
+BlogId = "3974082107657293362"
 
 
-def page_not_found(e):
-  return render_template('404.html'), 404
+def main(argv):
+
+    print("Starting....")
+
+    # Authenticate and construct service.
+    service, flags = sample_tools.init(
+    argv, 'blogger', 'v3', __doc__, __file__,
+    scope='https://www.googleapis.com/auth/blogger')
+
+    while(True):
+
+        try:
+
+            users = service.users()
+
+            # Retrieve this user's profile information
+            thisuser = users.get(userId="self").execute()
+            print("This user's display name is: %s" % thisuser["displayName"])
+
+            blogs = service.blogs()
+
+            posts = service.posts()
+            
+            prompt_file = open("prompts.txt","r")
+            prompt_list = prompt_file.readlines()
 
 
-app = Flask(__name__)
-app.config.from_object(config.config['development'])
+            print("\n\nLIST:\n")
 
-app.register_error_handler(404, page_not_found)
+            for index in range(0,len(prompt_list)):
+                prompt_list[index] = prompt_list[index].replace('\n','')
+                print(prompt_list[index]+", ")
 
+            print("\n\n")
 
-@app.route('/', methods=["GET", "POST"])
-def index():
+            prompt = prompt_list[random.randint(0, len(prompt_list)-1)]
 
-    if request.method == 'POST':
-        """
-        if 'form1' in request.form:
-            prompt = request.form['blogTopic']
-            blogT = blog.generateBlogTopics(prompt)
-            blogTopicIdeas = blogT.replace('\n', '<br>')
+            fullText = ""
 
-        if 'form2' in request.form:
-            prompt = request.form['blogSection']
-            blogT = blog.generateBlogSections(prompt)
-            blogSectionIdeas = blogT.replace('\n', '<br>')
-
-        if 'form3' in request.form:
-            prompt = request.form['blogExpander']
-            blogT = blog.blogSectionExpander(prompt)
-            blogExpanded = blogT.replace('\n', '<br>')
-        """
-        if 'form1' in request.form:
-
-            fullText = "TOPIC:\n"
-
-            prompt = request.form['blogTopic']
             blogT = blog.generateBlogTopics(prompt)
             blogTopicIdeas = blogT.split('\n')
 
             if(blogTopicIdeas[2][0].isdigit()):
                 blogTopicIdeas[2] = blogTopicIdeas[2][2:]
 
-            fullText += blogTopicIdeas[2] + "\n\n";
+            fullText += "<h1><b>" + blogTopicIdeas[2] + "</b></h1><br><br><br>";
 
             blogT = blog.generateBlogSections(blogTopicIdeas[2])
             blogSectionIdeas = blogT.split('\n')
@@ -53,18 +72,31 @@ def index():
                 if(blogSectionIdeas[section].replace(" ", "") != ""):
                     if(blogSectionIdeas[section][0].isdigit()):
                         blogSectionIdeas[section] = blogSectionIdeas[section][2:]
-                    fullText += "SECTION: \n" + blogSectionIdeas[section] + blog.blogSectionExpander(blogTopicIdeas[2],blogSectionIdeas[section]) + "\n\n\n"
-
-            ##print(fullText + "\n\n\nTOPIC IDEAS:\n\n")
-            ##print(*blogTopicIdeas, sep = "   BBB   ")
-            ##print("\n\n\nSECTION IDEAS:\n\n")
-            ##print(*blogSectionIdeas, sep = "   BBB   ")
+                    fullText += "<h4><b>" + blogSectionIdeas[section] + "</b></h4>" + "<p>" + blog.blogSectionExpander(blogTopicIdeas[2],blogSectionIdeas[section]) + "<p><br><br>"
 
             fullText = fullText.replace('\n', '<br>')
 
+            body = {
+                "kind": "blogger#post",
+                "title": blogTopicIdeas[2],
+                "content":fullText
+            }
 
-    return render_template('index.html', **locals())
+            posts.insert(blogId=BlogId, body=body, isDraft=False).execute()
+
+            print("Blog Post made with title: " + blogTopicIdeas[2])
+        
+        except client.AccessTokenRefreshError:
+            print(
+                "The credentials have been revoked or expired, please re-run"
+                "the application to re-authorize"
+            )
+
+        sleep(60*15)
+
+    print("Closing...")
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port='8888', debug=True)
+    main(sys.argv)
+
